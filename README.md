@@ -1,6 +1,6 @@
 # Rcon-zandro
 
-## A basic Zandronum v.3+ RCon console terminal. (Couldn't find one, so made one.)
+## A basic Zandronum v.3+ RCon console terminal.
 
 The Zandronum RCon protocol uses its own Huffman frequencies, which are implemented in huffman.py.
 
