@@ -1,31 +1,68 @@
 #!/usr/bin/env python3
-# Zandronum RCON client (with Cli args + command history in active session)
+# Zandronum RCON client (with CLI args + persistent command history)
 
 import hashlib
 import socket
 import threading
 import time
+import os
 from io import BytesIO
 import sys
+from pathlib import Path
 
 import huffman
 from fixedcolors import get_color_less
 from headers import svrc, svrcu, clrc, protocol_ver
 
-# ------------ COMMAND HISTORY ---------------
+# ----------------- PERSISTENT HISTORY -----------------
+HISTORY_FILE = Path.home() / ".rcon_history"
+MAX_HISTORY = 1000  # Max lines to keep
+
 try:
-    import readline  # Linux/macOS
+    import readline
 except ImportError:
     try:
-        import pyreadline as readline  # Older Windows
+        import pyreadline3 as readline
     except ImportError:
-        try:
-            import pyreadline3 as readline  # Newer Windows
-        except ImportError:
-            readline = None  # No history available
+        readline = None
 
+# Load history at startup
+if readline:
+    try:
+        if HISTORY_FILE.exists():
+            with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        readline.add_history(line)
+    except Exception as e:
+        print(f"[Warning] Failed to load history: {e}", file=sys.stderr)
 
-# Zandronum-specific Huffman Frequencies
+def save_history():
+    """Save current session history to file."""
+    if not readline:
+        return
+    try:
+        # Get current history
+        hist = [readline.get_history_item(i) for i in range(1, readline.get_current_history_length() + 1)]
+        # Keep only last N unique commands
+        unique = []
+        seen = set()
+        for cmd in reversed(hist):
+            if cmd and cmd not in seen:
+                seen.add(cmd)
+                unique.append(cmd)
+                if len(unique) >= MAX_HISTORY:
+                    break
+        unique.reverse()
+        # Write
+        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+            for cmd in unique:
+                f.write(cmd + "\n")
+    except Exception as e:
+        print(f"[Warning] Failed to save history: {e}", file=sys.stderr)
+
+# ----------------- HUFFMAN OBJECT -----------------
 H = huffman.HuffmanObject(huffman.SKULLTAG_FREQS)
 
 
@@ -37,13 +74,12 @@ class RCONClient:
     def __init__(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.settimeout(4.0)
-
         self.address = None
         self.rcon_password = None
         self.running = False
 
     # -------------------------------
-    #  Huffman wrappers encode/decode
+    #  Huffman encode/decode
     # -------------------------------
     def encode(self, seq):
         buf = BytesIO()
@@ -176,41 +212,45 @@ class RCONClient:
 
 
 # ================================================================
-#  Interactive console and server password
+#  Main and Server Pasword
 # ================================================================
 def main():
     if len(sys.argv) != 3:
-        print("Usage: python rcon_console.py <ip> <port>")
+        print("Usage: python rcon_client.py <ip> <port>")
         sys.exit(1)
 
     ip = sys.argv[1]
     port = int(sys.argv[2])
-    password = "YOUR_SERVER_PASSWORD_HERE"   # server password!
+    password = "YOUR_SERVER_PASSWORD_HERE"  # ← Change this !!!!!!
 
-    # Enable command history if supported
+    # Enable readline features
     if readline:
         readline.parse_and_bind("tab: complete")
         readline.parse_and_bind("set editing-mode emacs")
 
     client = RCONClient()
-    client.connect((ip, port), password)
-
-    print("[ Connected ]")
-    print("Type commands. Ctrl+C to quit.\n")
-
     try:
+        client.connect((ip, port), password)
+        print("[ Connected ]")
+        print("Type commands. Ctrl+C to quit.\n")
+
         while True:
             try:
-                cmd = input(">> ")
-                if cmd.strip():
+                cmd = input(">> ").strip()
+                if cmd:
                     client.send_command(cmd)
+                    # Add to history only if not duplicate of last
+                    if readline and (readline.get_current_history_length() == 0 or
+                                     readline.get_history_item(readline.get_current_history_length()) != cmd):
+                        readline.add_history(cmd)
             except EOFError:
                 break
-
     except KeyboardInterrupt:
         pass
-
+    except Exception as e:
+        print(f"[FATAL] {e}")
     finally:
+        save_history()  # ← Save on exit
         client.disconnect()
 
 
