@@ -9,7 +9,7 @@ svrc = {
 	'Message': 				int(37),
 	'Update': 				int(38),
 	'TabComplete': 			int(39),
-	'TooManyTabCompletes': 	int(38),
+	'TooManyTabCompletes': 	int(40),  # was incorrectly aliased to Update (38); verify against live server traffic
 }
 
 clrc = {

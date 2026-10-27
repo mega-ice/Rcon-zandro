@@ -20,24 +20,20 @@ from headers import svrc, svrcu, clrc, protocol_ver
 # Enable color output (set to True to show colors, False to strip them)
 SHOW_COLORS = False
 
-# Hardcoded RCON password - CHANGE THIS!
-RCON_PASSWORD = "YOUR_SERVER_PASSWORD_HERE"
+# RCON password - set via environment variable (or default for local dev).
+# Usage:
+#   RCON_PASSWORD=your_password python3 rcon_client.py <ip> <port>
+RCON_PASSWORD = os.environ.get("RCON_PASSWORD", "YOUR_SERVER_PASSWORD_HERE")
 
 # ================================
 # COLOR STRIPPING UTILITY
 # ================================
-def strip_colors(text):
-    # Strip Zandronum Player color codes from text using regex.
-    # Handle color codes like \c[uh0] through \c[uh99], \c[a-z0-9-], etc.
-    # This pattern matches both \c[uh0] and \cA style codes correctly
-    color_pattern = r'\\c[a-zA-Z0-9\-]+$$9956$$|\c[a-zA-Z0-9\-]'
+# Strip Zandronum color codes (e.g. \c[uh0], \c[0;35m) from server text.
+COLOR_PATTERN = re.compile(r"\\c\[[^\]]*\]")
 
-    # check, process text to avoid regex errors
-    try:
-        return re.sub(color_pattern, '', text)
-    except re.error:
-        # If regex fails, return text unchanged
-        return text
+def strip_colors(text: str) -> str:
+    """Strip ANSI/RCON color escape sequences from server messages."""
+    return COLOR_PATTERN.sub("", text)
 
 # ================================
 # PERSISTENT HISTORY
@@ -155,7 +151,9 @@ class RCONClient:
             msg = packet_data.decode(errors="replace")
             if not SHOW_COLORS:
                 msg = strip_colors(msg)
-            print(msg, end="")
+            # Strip NUL padding/artifact bytes and ensure newline-terminated output
+            msg = msg.replace("\x00", "")
+            print(msg, end="" if msg.endswith("\n") else "\n")
 
         elif packet_id == svrc["Update"]:
             pass
@@ -168,7 +166,9 @@ class RCONClient:
             msg = packet_data.decode(errors="replace")
             if not SHOW_COLORS:
                 msg = strip_colors(msg)
-            print(msg, end="")
+            # Strip NUL padding/artifact bytes and ensure newline-terminated output
+            msg = msg.replace("\x00", "")
+            print(msg, end="" if msg.endswith("\n") else "\n")
 
         else:
             print(f"[server:{packet_id}] Unknown packet")
@@ -235,11 +235,11 @@ class RCONClient:
             self.running = False
             try:
                 self.send_packet((clrc["Disconnect"],))
-            except:
+            except Exception:
                 pass
         try:
             self.socket.close()
-        except:
+        except Exception:
             pass
         print("[Disconnected]")
 
