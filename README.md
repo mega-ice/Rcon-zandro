@@ -145,7 +145,6 @@ Rcon-zandro/
 ├── rcon_client.py    # Main RCON client implementation
 ├── huffman.py         # Zandronum Huffman compression codec
 ├── headers.py         # Protocol constants and packet IDs
-├── fix.md             # Proposed changes and applied fixes
 └── README.md          # This file
 ```
 

@@ -4,7 +4,6 @@
 import hashlib
 import socket
 import threading
-import time
 import os
 from io import BytesIO
 import sys
@@ -97,8 +96,7 @@ class ZandronumError(Exception):
 
 class RCONClient:
     def __init__(self):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.socket.settimeout(4.0)
+        self.socket = None
         self.address = None
         self.rcon_password = None
         self.running = False
@@ -179,6 +177,15 @@ class RCONClient:
     def connect(self, address, password):
         self.address = address
         self.rcon_password = password
+
+        # Create a UDP socket appropriate for the address family.
+        # AF_INET6 with dual-stack (IPV6_V6ONLY=0) accepts IPv4-mapped addresses;
+        # plain IPv4 addresses use the classic AF_INET socket.
+        family = socket.AF_INET6 if ":" in address[0] else socket.AF_INET
+        self.socket = socket.socket(family, socket.SOCK_DGRAM)
+        if family == socket.AF_INET6:
+            self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)  # dual-stack: accepts IPv4 and IPv6
+        self.socket.settimeout(4.0)
 
         print(f"[+] Connecting to {address}...")
 

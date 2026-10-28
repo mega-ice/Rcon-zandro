@@ -3,7 +3,7 @@
 # Preserves exact behavior: frequencies, padding, 0xff fallback.
 
 from __future__ import annotations
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 SKULLTAG_FREQS = [
     0.14473691, 0.01147017, 0.00167522, 0.03831121, 0.00356579, 0.03811315,
@@ -71,13 +71,13 @@ class HuffmanObject:
 
         for _ in range(255):
             # Find two lowest frequency nodes
-            n1, n2 = sorted(
-                (n for n in nodes if n is not None),
-                key=lambda x: x['frq']
-            )[:2]
+            live = [n for n in nodes if n is not None]
+            n1, n2 = sorted(live, key=lambda x: x['frq'])[:2]
 
-            idx1 = nodes.index(n1)
-            idx2 = nodes.index(n2)
+            # Locate nodes by object identity (index-by-value lookup could
+            # match the wrong node in rare cases)
+            idx1 = next(i for i, n in enumerate(nodes) if n is n1)
+            idx2 = next(i for i, n in enumerate(nodes) if n is n2)
 
             parent = {
                 'frq': n1['frq'] + n2['frq'],
@@ -89,7 +89,7 @@ class HuffmanObject:
 
         self.huffman_tree = next(n for n in nodes if n is not None)
 
-    def _build_lookup_table(self, node: Dict = None, path: str = "") -> None:
+    def _build_lookup_table(self, node: Optional[Dict] = None, path: str = "") -> None:
         # Recursively build encoding table.
         if node is None:
             node = self.huffman_tree

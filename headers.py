@@ -1,4 +1,4 @@
-protocol_ver = int(4).to_bytes(1, byteorder='little')
+protocol_ver = int(4)
 
 svrc = {
 	'OldProtocol': 			int(32),
@@ -13,12 +13,12 @@ svrc = {
 }
 
 clrc = {
-	'BeginConnection': 		int(52).to_bytes(1, byteorder='little'),
-	'Password': 			int(53).to_bytes(1, byteorder='little'),
-	'Command': 				int(54).to_bytes(1, byteorder='little'),
-	'Pong': 				int(55).to_bytes(1, byteorder='little'),
-	'Disconnect': 			int(56).to_bytes(1, byteorder='little'),
-	'TabComplete': 			int(57).to_bytes(1, byteorder='little'),
+	'BeginConnection': 		52,
+	'Password': 			53,
+	'Command': 				54,
+	'Pong': 				55,
+	'Disconnect': 			56,
+	'TabComplete': 			57,
 }
 
 svrcu = {
