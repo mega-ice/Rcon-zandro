@@ -51,23 +51,22 @@ SKULLTAG_FREQS = [
     0.00105728, 0.00186824, 0.00092908, 0.00160896,
 ]
 
-
 class HuffmanObject:
     # Zandronum/Skulltag Huffman encoder/decoder.
     # Uses precomputed frequency table to build Huffman tree.
     # Supports fallback to raw data if compression increases size.
 
-    def __init__(self, freqs: List[float]):
-        self.huffman_freqs = freqs
+    def __init__(self, freqs: List[float]) -> None:
+        self.huffman_freqs: List[float] = freqs
         self.huffman_tree: Dict[str, Any] = {}
-        self.huffman_table: List[str] = ["" for _ in range(256)]
+        self.huffman_table: List[str] = [""] * 256
 
         self._build_tree()
         self._build_lookup_table()
 
     def _build_tree(self) -> None:
         # Build Huffman tree from frequency list.
-        nodes = [{'frq': f, 'asc': i} for i, f in enumerate(self.huffman_freqs)]
+        nodes: List[Dict[str, Any] | None] = [{'frq': f, 'asc': i} for i, f in enumerate(self.huffman_freqs)]
 
         for _ in range(255):
             # Find two lowest frequency nodes
@@ -79,7 +78,7 @@ class HuffmanObject:
             idx1 = next(i for i, n in enumerate(nodes) if n is n1)
             idx2 = next(i for i, n in enumerate(nodes) if n is n2)
 
-            parent = {
+            parent: Dict[str, Any] = {
                 'frq': n1['frq'] + n2['frq'],
                 '0': n2,
                 '1': n1,
@@ -89,7 +88,7 @@ class HuffmanObject:
 
         self.huffman_tree = next(n for n in nodes if n is not None)
 
-    def _build_lookup_table(self, node: Optional[Dict] = None, path: str = "") -> None:
+    def _build_lookup_table(self, node: Optional[Dict[str, Any]] = None, path: str = "") -> None:
         # Recursively build encoding table.
         if node is None:
             node = self.huffman_tree
@@ -105,7 +104,7 @@ class HuffmanObject:
         if not isinstance(data, bytes):
             raise ValueError("Input must be bytes")
 
-        bitstring = ''.join(self.huffman_table[b] for b in data)
+        bitstring: str = ''.join(self.huffman_table[b] for b in data)
 
         # Convert to bytes (LSB first per original)
         encoded = bytearray()
@@ -129,20 +128,20 @@ class HuffmanObject:
         if not data:
             return b''
 
-        padding_or_flag = data[0]
-        payload = data[1:]
+        padding_or_flag: int = data[0]
+        payload: bytes = data[1:]
 
         # Check for raw fallback
         if padding_or_flag == 0xFF:
             return payload
 
         # Convert bytes to bitstring
-        bitstring = ''.join(f'{b:08b}'[::-1] for b in payload)
+        bitstring: str = ''.join(f'{b:08b}'[::-1] for b in payload)
         bitstring = bitstring[:-padding_or_flag] if padding_or_flag else bitstring
 
         # Traverse tree
-        result = bytearray()
-        node = self.huffman_tree
+        result: bytearray = bytearray()
+        node: Dict[str, Any] = self.huffman_tree
         for bit in bitstring:
             node = node[bit]
             if 'asc' in node:
@@ -150,3 +149,7 @@ class HuffmanObject:
                 node = self.huffman_tree
 
         return bytes(result)
+
+
+# Pre-built Huffman object for common use.
+DEFAULT_HUFFMAN = HuffmanObject(SKULLTAG_FREQS)

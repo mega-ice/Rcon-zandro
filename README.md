@@ -37,13 +37,14 @@ chmod +x rcon_client.py
 
 ## Configuration
 
-Set the RCON password via the `RCON_PASSWORD` environment variable (recommended) or edit the default in `rcon_client.py`:
+Set the RCON password via the `RCON_PASSWORD` environment variable (required):
 
 ```python
 # rcon_client.py
 SHOW_COLORS = False  # Set to True to enable color codes in output
 
-RCON_PASSWORD = os.environ.get("RCON_PASSWORD", "YOUR_SERVER_PASSWORD_HERE")
+RCON_PASSWORD = os.environ.get("RCON_PASSWORD")
+# Exits with error if not set
 ```
 
 ```bash
@@ -166,10 +167,12 @@ export RCON_PASSWORD="your_server_password_here"
 - Check firewall settings
 - Confirm the server's RCON port is not blocked
 
-### Invalid Password
-- Double-check the password set via the `RCON_PASSWORD` environment variable
-- Ensure no extra spaces or hidden characters
-- Verify the password matches exactly what the server expects
+### Missing Password
+- Ensure `RCON_PASSWORD` is set before running:
+  ```bash
+  export RCON_PASSWORD="your_password"
+  ```
+- The client will exit with a clear error if the variable is not set
 
 ### Command Not Recognized
 - Server might not support the command
@@ -217,6 +220,14 @@ To add features or fix bugs:
 
 
 ## Version History
+
+- **v1.2** - Configuration and code quality improvements
+  - Removed hardcoded default password; client now exits with error if `RCON_PASSWORD` is unset
+  - Added `TooManyTabCompletes` warning message
+  - Extracted magic numbers to named constants (`MAX_PACKET_SIZE`, `SOCKET_TIMEOUT`)
+  - Added type hints to `huffman.py`
+  - Cached Huffman tree as module-level singleton (`DEFAULT_HUFFMAN`)
+  - Cleaned up redundant `int()` wrappers in `headers.py`
 
 - **v1.1** - Critical bug fixes
   - Fixed invalid color-strip regex that silently disabled color code stripping

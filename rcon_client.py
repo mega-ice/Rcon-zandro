@@ -13,16 +13,24 @@ import re
 import huffman
 from headers import svrc, svrcu, clrc, protocol_ver
 
+# Network constants
+MAX_PACKET_SIZE = 4096
+SOCKET_TIMEOUT = 4.0
+
 # ================================
 # CONFIGURATION SECTION
 # ================================
 # Enable color output (set to True to show colors, False to strip them)
 SHOW_COLORS = False
 
-# RCON password - set via environment variable (or default for local dev).
+# RCON password - set via environment variable.
 # Usage:
 #   RCON_PASSWORD=your_password python3 rcon_client.py <ip> <port>
-RCON_PASSWORD = os.environ.get("RCON_PASSWORD", "YOUR_SERVER_PASSWORD_HERE")
+RCON_PASSWORD = os.environ.get("RCON_PASSWORD")
+if not RCON_PASSWORD:
+    print("Error: RCON_PASSWORD environment variable is not set.")
+    print("Set it like this: RCON_PASSWORD=your_password python3 rcon_client.py <ip> <port>")
+    sys.exit(1)
 
 # ================================
 # COLOR STRIPPING UTILITY
@@ -87,7 +95,7 @@ def save_history():
 # ================================
 # HUFFMAN OBJECT
 # ================================
-H = huffman.HuffmanObject(huffman.SKULLTAG_FREQS)
+H = huffman.DEFAULT_HUFFMAN
 
 
 class ZandronumError(Exception):
@@ -158,7 +166,7 @@ class RCONClient:
         elif packet_id == svrc["TabComplete"]:
             pass
         elif packet_id == svrc["TooManyTabCompletes"]:
-            pass
+            print("[Warning] Server reports too many tab completion results; some results omitted.")
 
         elif packet_id in svrcu.values():
             msg = packet_data.decode(errors="replace")
@@ -185,7 +193,7 @@ class RCONClient:
         self.socket = socket.socket(family, socket.SOCK_DGRAM)
         if family == socket.AF_INET6:
             self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)  # dual-stack: accepts IPv4 and IPv6
-        self.socket.settimeout(4.0)
+        self.socket.settimeout(SOCKET_TIMEOUT)
 
         print(f"[+] Connecting to {address}...")
 
@@ -193,7 +201,7 @@ class RCONClient:
         self.socket.sendto(begin, self.address)
 
         try:
-            raw, srv = self.socket.recvfrom(4096)
+            raw, srv = self.socket.recvfrom(MAX_PACKET_SIZE)
         except socket.timeout:
             raise ZandronumError("Connection timed out.")
 
@@ -212,7 +220,7 @@ class RCONClient:
     def listen_loop(self):
         while self.running:
             try:
-                data, _ = self.socket.recvfrom(4096)
+                data, _ = self.socket.recvfrom(MAX_PACKET_SIZE)
                 decoded = self.decode(data)
                 p_id = decoded[0]
                 self.handle_packet(p_id, decoded[1:])
