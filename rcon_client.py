@@ -297,8 +297,7 @@ class RCONClient:
     def send_command(self, cmd: str):
         self.send_packet((clrc["Command"], cmd))
 
-    def shutdown(self) -> None:
-        """Signal the listener to stop, then disconnect gracefully."""
+    def disconnect(self) -> None:
         self.running = False
         # Wake the socket so recvfrom unblocks
         if self.socket:
@@ -306,9 +305,6 @@ class RCONClient:
                 self.socket.sendto(b"", self.address)
             except Exception:
                 pass
-
-    def disconnect(self) -> None:
-        self.shutdown()
         try:
             self.send_packet((clrc["Disconnect"],))
         except Exception:
@@ -319,14 +315,6 @@ class RCONClient:
         except Exception:
             pass
         print("[Disconnected]")
-
-    # Context manager support
-    def __enter__(self) -> "RCONClient":
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        self.disconnect()
-        return False
 
 
 # ================================
@@ -394,7 +382,7 @@ def main() -> None:
                                  readline.get_history_item(readline.get_current_history_length()) != cmd):
                                     readline.add_history(cmd)
     except KeyboardInterrupt:
-        client.shutdown()  # Graceful shutdown on Ctrl+C
+        pass
     except Exception as e:
         print(f"[FATAL] {e}")
     finally:
