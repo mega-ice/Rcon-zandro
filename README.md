@@ -133,7 +133,7 @@ The RCON protocol uses UDP for communication, with the following characteristics
 - `56` - Disconnect
 - `57` - TabComplete
 
-**Server-to-Client** (`headers.svrc`):
+**Server-to-Client** (top-level constants):
 - `32` - OldProtocol
 - `33` - Banned
 - `34` - Salt (32 bytes)
