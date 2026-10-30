@@ -11,15 +11,19 @@ Rcon-zandro provides a command-line interface for remote administration of Zandr
 - **Remote Server Administration**: Execute console commands on remote Zandronum servers
 - **Persistent Command History**: Commands are saved to `~/.rcon_history` and persist across sessions
 - **Huffman Compression**: Uses Zandronum's proprietary compression algorithm for efficient protocol communication
-- **Color Support**: Optional color code stripping in server output
-- **Tab Completion**: Command completion support for easier typing
-- **Thread-Safe Communication**: Background thread handles incoming server messages
+- **Color Support**: Optional color code stripping (`--colors` flag)
+- **Batch/CI Mode**: Send a single command and exit (`--command <cmd>`)
+- **CLI Help**: `argparse`-based help with usage examples
+- **IPv4/IPv6 Auto-Detection**: Automatically detects address family and falls back gracefully
+- **Thread-Safe Output**: Lock-guarded `_print()` prevents output interleaving from the background listener thread
+- **match/case Dispatch**: Clean `handle_packet()` using Python 3.10+ pattern matching
+- **Tab Completion**: Readline-based tab completion
 - **Graceful Disconnection**: Automatic cleanup on exit or errors
 - **Secure Credential Handling**: RCON password configured via environment variable
 
 ## Requirements
 
-- Python 3.6 or higher
+- Python 3.10 or higher (for `match/case` syntax)
 - No external dependencies (uses only Python standard library)
 
 ## Installation
@@ -39,36 +43,47 @@ chmod +x rcon_client.py
 
 Set the RCON password via the `RCON_PASSWORD` environment variable (required):
 
-```python
-# rcon_client.py
-SHOW_COLORS = False  # Set to True to enable color codes in output
-
-RCON_PASSWORD = os.environ.get("RCON_PASSWORD")
-# Exits with error if not set
-```
-
 ```bash
-RCON_PASSWORD=your_server_password_here python3 rcon_client.py <server_ip> <server_port>
+RCON_PASSWORD=your_server_password python3 rcon_client.py <server_ip> <server_port>
 ```
 
 ## Usage
 
 ### Basic Connection
 
-Connect to a Zandronum server:
+Connect to a Zandronum server interactively:
 
 ```bash
-python3 rcon_client.py <server_ip> <server_port>
+RCON_PASSWORD=your_password python3 rcon_client.py <server_ip> <server_port>
 ```
 
 Example:
 ```bash
-python3 rcon_client.py 127.0.0.1 7777
+RCON_PASSWORD=mypass python3 rcon_client.py 10.10.0.2 10667
 ```
 
-With a custom password:
+### Batch / CI Mode
+
+Send a single command and exit (useful for scripts and CI):
+
 ```bash
-RCON_PASSWORD=your_server_password python3 rcon_client.py 127.0.0.1 7777
+RCON_PASSWORD=mypass python3 rcon_client.py 10.10.0.2 10667 --command "GameVersion"
+```
+
+### Color Output
+
+Preserve server color codes in output:
+
+```bash
+RCON_PASSWORD=mypass python3 rcon_client.py 10.10.0.2 10667 --colors --command "status"
+```
+
+### Help
+
+Display usage information:
+
+```bash
+python3 rcon_client.py --help
 ```
 
 ### Interactive Commands
@@ -110,7 +125,7 @@ The RCON protocol uses UDP for communication, with the following characteristics
 
 ### Packet Types
 
-**Client-to-Server**:
+**Client-to-Server** (`headers.clrc`):
 - `52` - BeginConnection (protocol version)
 - `53` - Password (MD5 hash)
 - `54` - Command
@@ -118,7 +133,7 @@ The RCON protocol uses UDP for communication, with the following characteristics
 - `56` - Disconnect
 - `57` - TabComplete
 
-**Server-to-Client**:
+**Server-to-Client** (`headers.svrc`):
 - `32` - OldProtocol
 - `33` - Banned
 - `34` - Salt (32 bytes)
@@ -128,9 +143,8 @@ The RCON protocol uses UDP for communication, with the following characteristics
 - `38` - Update
 - `39` - TabComplete
 - `40` - TooManyTabCompletes
-- `40+` - PlayerData, AdminCount, Map (various updates)
 
-### Huffman Compression
+## Huffman Compression
 
 Zandronum uses a proprietary Huffman codec with specific frequency tables. The implementation in `huffman.py`:
 
@@ -179,26 +193,6 @@ export RCON_PASSWORD="your_server_password_here"
 - Check server console for error messages
 - Ensure you're using the correct Zandronum version
 
-## Technical Implementation
-
-### Key Components
-
-**RCONClient Class**
-- Handles UDP socket communication
-- Manages connection lifecycle
-- Encodes/decodes Huffman-compressed packets
-- Processes incoming server packets
-
-**Huffman Codec**
-- Builds Huffman tree from frequency table
-- Creates lookup table for all 256 byte values
-- Handles compression fallback and padding
-
-**History Management**
-- Uses `readline` module for history
-- Falls back to `pyreadline3` on Windows
-- Saves to `~/.rcon_history` with 1000 command limit
-
 ## License
 
 This project is a Python implementation of Zandronum RCON protocol.
@@ -217,25 +211,3 @@ To add features or fix bugs:
 ## Acknowledgments
 
 - Zandronum team for the RCON protocol specification
-
-
-## Version History
-
-- **v1.2** - Configuration and code quality improvements
-  - Removed hardcoded default password; client now exits with error if `RCON_PASSWORD` is unset
-  - Added `TooManyTabCompletes` warning message
-  - Extracted magic numbers to named constants (`MAX_PACKET_SIZE`, `SOCKET_TIMEOUT`)
-  - Added type hints to `huffman.py`
-  - Cached Huffman tree as module-level singleton (`DEFAULT_HUFFMAN`)
-  - Cleaned up redundant `int()` wrappers in `headers.py`
-
-- **v1.1** - Critical bug fixes
-  - Fixed invalid color-strip regex that silently disabled color code stripping
-  - Fixed duplicate `TooManyTabCompletes` packet ID collision with `Update`
-  - RCON password now configurable via `RCON_PASSWORD` environment variable
-
-- **v1.0** - Initial Python implementation
-  - UDP-based RCON client
-  - Huffman compression support
-  - Persistent command history
-  - Thread-safe communication

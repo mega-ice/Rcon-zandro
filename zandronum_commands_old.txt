@@ -1,0 +1,61 @@
+| Command | Description |
+| ------- | ----------- |
+| AddBan | Issues a ban on an individual client or clients. Syntax for AddBan is: AddBan <IPv4> ["Reason"]. Additionally, range bans are acceptable by using wildcards, such as ( * ). However, when the client or clients are blacklisted, they will not be able to communicate with that server until the client or clients are whitelisted or expunged from the blacklist. Time When approaching this argument, the time can be inputted as 6days or even 1345years. The allowed time/date formats are: minutes, hours, days, months, and years. Perm (or permanent ban) is what it is, permanent. This can also be used as the time argument. Note: IPv4 is only supported; IPv6 is unsupported at the mean time. |
+| AddBanExemption | Allows clients that are caught in a range ban to be omitted from the ban. Additionally, the clients IP will be added into the whitelist. However, if the clients IP changes, their new issued IP must be added into the whitelist. |
+| AddBot | Allows the possibility to add a bot into the game. Bots can be added just by random (AddBot) or use a specific bot (AddBot "BotName"). Zandronums's bot compatibility is different compared to ZDoom's bot compatibility, for example, the bots movement compared the two are different along with the bots response. An optional team name can be specified for the bot to join. |
+| AddMap | When using 'SV_MapRotation', AddMap can be used to define what maps to include into the map list. AddMap also supports optional minimum and maximum player limits. |
+| Ban | Adds the clients IP to the blacklist. Syntax for Ban is: Ban <PlayerName> ["Reason"]. Time When approaching this argument, the time can be inputted as 6days or even 1345years. The allowed time/date formats are: minutes, hours, days, months, and years. Perm (or permanent ban) is what it is, permanent. This can also be used as the time argument. |
+| Ban_IDx | Bans a specific client by use of the Player index number list. Syntax for Ban_IDx is: Ban_IDx <Index integer> ["Reason"]. Time When approaching this argument, the time can be inputted as 6days or even 1345years. The allowed time/date formats are: minutes, hours, days, months, and years. Perm (or permanent ban) is what it is, permanent. This can also be used as the time argument. |
+| CancelVote | Forces the vote to be terminated. |
+| ChangeMap | This CCMD allows the server to switch to another specified map. As this CCMD is adjacent to 'Map' CCMD, ChaneMap will not force the clients to reconnect back to the server, but the clients will go into the intermission screen instead. When using this CCMD, be sure to use the ' Map LUMP Name ' and not the name of the level. For example, do not use 'ChangeMap "The Entryway", but instead use 'ChangeMap MAP01'. If this CCMD is used within the server, all clients are forced to automatically reconnect to the server. Furthermore, if the client uses this CCMD while on the server, the client will disconnect from the server and start a new single player game. Note: For specialized PWAD and compressed files, please be sure to check the .txt file that is included with the file. The raw text document should and usually contains the map ranges used, as not all projects use the standard 'MAPx' format. For example, DIP01-08. |
+| ClearBans | Expunges all of the clients IP's from the blacklist. |
+| ClearMapList | Thrashes all maps from the server's MapList. |
+| CMDList | Displays all available Commands on the console. |
+| DelBan | Expunges the specified IP from the blacklist. |
+| DelBanExemption | Expunges the specified IP from the whitelist. |
+| DelMap | Removes a map by lump name from rotation. |
+| DelMap_IDx | Removes a map by number from rotation. |
+| DumpTrafficMeasure | Displays how much of the bandwidth is used for both ACS scripts and Actor classes. However, the server CVar SV_MeasureOutBoundTraffic must be true for this to work. See Measuring outbound traffic for a tutorial. Descending Order: By default, in Zandronum 3.2, the output provided in this CCMD will be in ascending order. If needing descending order, add the "desc" as the first argument. For example: 'DumpTrafficMeasure desc'. |
+| Exit | Terminates the current Zandronum session. |
+| ForceRename | (development version 3.2 -alpha and above only ) Forcibly changes the name of the specified player to a generic name similar to "Player 1234". |
+| ForceRename_IDX | (development version 3.2 -alpha and above only ) Forcibly changes the name of the specified player to a generic name similar to "Player 1234". |
+| ForceSpec | Forces the client from the server to spectate the game. However, the client can rejoin the game when plausible. |
+| ForceSpec_IDx | Forces the client from the server to spectate the game by using the Player list index. However, the client can rejoin the game when plausible. The player index number list can be found in the 'PlayerInfo' CCMD. |
+| GameVersion | Displays the current executable version and revision. |
+| GetIP | When used within the server console, this CCMD displays the targeted clients IP address. |
+| GetIP_IDx | When used within the server console, this CCMD displays the targeted clients IP address by use of the Player index number list. The player index number list can be found in the 'PlayerInfo' CCMD. |
+| History | When used, this displays all of the commands that were inputted into the console. |
+| Ignore | Ignores a specified client. If wanting to ignore a player for a duration of time in minutes, optional, add an positive integer number after the client's name. In addition, a reason string can be added, but optional. To ignore a client indefinitely, just provide the 'Ignore "str"'. |
+| Ignore_IDx | Ignores a specified client using the Player Index number list. If wanting to ignore a player for a duration of time in minutes, optional, add a positive integer number after the client's name. In addition, a reason string can be added, but optional. To ignore a client indefinitely, just provide the 'Ignore_IDx Num'. The Player Index number list can be found in 'PlayerIndex' CCMD. |
+| InsertMap | Inserts a map to the map rotation list, after [Position]. Use CCMD maplist to list the rotation with index numbers. InsertMap also supports optional minimum and maximum player limits. |
+| IP | Displays the clients IP on the console. |
+| Kick | Forces the client to disconnect from the server. When using this CCMD use quotations on the players name in order to be sure that the correct player is kicked. |
+| Kick_IDx | Forces the client to disconnect from the server, while utilizing the Player Index list. |
+| Kick_IP | Forces the client(s) with the exact IP address to be disconnected from the server. However, the clients can reconnect to the server. |
+| KickFromGame | ATTN: Deprecated - Replaced by ForceSpec Forces the client from the server to spectate the game. However, the client can rejoin the game when plausible. |
+| KickFromGame_IDx | ATTN: Deprecated - Replaced by ForceSpec_IDx Forces the client from the server to spectate the game by using the Player list index. However, the client can rejoin the game when plausible. The player index number list can be found in the 'PlayerInfo' CCMD. |
+| ListBots | Displays all available bots. |
+| ListVoteTypes | Shows all possible, native and custom, votes that are allowed on the host. |
+| LogFile | When used, this CCMD will log every messages presented within the console. |
+| Map | This CCMD allows the client or server to switch from on map to another, but without displaying an intermission screen. When using this CCMD, be sure to use the ' Map LUMP Name ' and not the name of the level. For example, do not use 'Map "The Entryway", but instead use 'Map MAP01'. If this CCMD is used within the server, all clients are forced to automatically reconnect to the server. Furthermore, if the client uses this CCMD while on the server, the client will disconnect from the server and start a new single player game. Note: For specialized PWAD and compressed files, please be sure to check the .txt file that is included with the file. The raw text document should and usually contains the map ranges used, as not all projects use the standard 'MAPx' format. For example, DIP01-08. |
+| MapList | Displays the servers MapList. |
+| NextMap | When used, allows the server to jump into the next map. Adjacent to 'ChangeMap' and 'Map' CCMDs, but 'NextMap' does not require map names. NextMap will only advance to the next map that is specified in either MAPINFO or the MapRotation list. |
+| NextSecret | When used, this allows the server to jump into the next secret map. |
+| Pings | Displays all of the connected clients pings. |
+| PlayerInfo | When entered by clients displays a Player index number list and their pings. However, when entered within the server console, this will display not only the Player index number list but their IP's. |
+| PrintJoinQueue | This allows the server to list the full join queue. |
+| Puke | When used, allows the use to force a script to execute within the PWAD/PKx files. This is usually used for project developers. |
+| Quit | Terminates the current Zandronum session. |
+| ReloadBans | When used, this enforces the server to reload the blacklist. This is useful when the blacklist file has been modified and the server did not read the changes before the server initially started. |
+| RemoveBot | Removes either a random bot (RemoveBot) or removes a specific bot from the game (RemoveBot "BotName"). |
+| RemoveBots | Remove all bots from the game. |
+| ResetMap | (development version 3.2 -alpha and above only ) Resets the current map. This is akin to the ResetMap ACS function, or when the map is reset after all players died in Survival. |
+| Say | Allows the players/server to communicate with others in the game, by use of the console. |
+| SayTo | Allows the player/server to communicate privately with each other privately which other players cannot see, using the name of the player who will receive the message. If you want to send a private message to the server, use "Server" as the name instead. |
+| SayTo_IDx | Allows the player/server to communicate privately with each other which other players cannot see, using the index of the player who will receive the message. If you want to send a private message to the server, use -1 for the index instead. |
+| Unignore | Unignores a specified client. |
+| Unignore_IDx | Unignores a specific client with the use of Player Index number list. The player index number list can be found in the 'PlayerInfo' CCMD. |
+| Version_Info | Displays information the Mercurial changeset that the binary build is based on. |
+| ViewBanList | Displays the blacklist within the servers console |
+| ViewBanExemptionList | Displays the whitelist within the servers console. |
+| WADS | Displays all of the loaded WADs used in the current session. |

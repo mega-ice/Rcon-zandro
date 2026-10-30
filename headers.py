@@ -9,7 +9,7 @@ svrc = {
     'Message':             37,
     'Update':              38,
     'TabComplete':         39,
-    'TooManyTabCompletes': 40,  # was incorrectly aliased to Update (38); verify against live server traffic
+    'TooManyTabCompletes': 40,
 }
 
 clrc = {
@@ -26,3 +26,16 @@ svrcu = {
     'AdminCount': 1,
     'Map':        77,
 }
+
+# Named packet-type constants.
+# Top-level int constants can be used as `match`/`case` value patterns via
+# dotted-name references (e.g. `case headers.MESSAGE:`), unlike dict subscripts.
+OLD_PROTOCOL: int = 32
+BANNED: int = 33
+SALT: int = 34
+LOGGED_IN: int = 35
+INVALID_PASSWORD: int = 36
+MESSAGE: int = 37
+UPDATE: int = 38
+TABCOMPLETE: int = 39
+TOO_MANY_TABCOMPLETE: int = 40

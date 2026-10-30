@@ -3,7 +3,7 @@
 # Preserves exact behavior: frequencies, padding, 0xff fallback.
 
 from __future__ import annotations
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 
 SKULLTAG_FREQS = [
     0.14473691, 0.01147017, 0.00167522, 0.03831121, 0.00356579, 0.03811315,
@@ -88,16 +88,17 @@ class HuffmanObject:
 
         self.huffman_tree = next(n for n in nodes if n is not None)
 
-    def _build_lookup_table(self, node: Optional[Dict[str, Any]] = None, path: str = "") -> None:
-        # Recursively build encoding table.
-        if node is None:
-            node = self.huffman_tree
-
-        if '0' in node:
-            self._build_lookup_table(node['0'], path + '0')
-            self._build_lookup_table(node['1'], path + '1')
-        else:
-            self.huffman_table[node['asc']] = path
+    def _build_lookup_table(self) -> None:
+        # Iteratively (stack-based) build the encoding table.
+        # Avoids deep-recursion limits on pathological trees.
+        stack: List[Tuple[Dict[str, Any], str]] = [(self.huffman_tree, "")]
+        while stack:
+            node, path = stack.pop()
+            if '0' in node:
+                stack.append((node['0'], path + '0'))
+                stack.append((node['1'], path + '1'))
+            else:
+                self.huffman_table[node['asc']] = path
 
     def encode(self, data: bytes) -> bytes:
         # Encode bytes using Huffman. Falls back to raw if larger.
