@@ -12,7 +12,7 @@ import sys
 import argparse
 from pathlib import Path
 import re
-from typing import Union, Sequence, Optional
+from typing import Union, Sequence
 
 import huffman
 import headers
@@ -21,6 +21,7 @@ from headers import clrc, protocol_ver
 # Network constants
 MAX_PACKET_SIZE = 4096
 SOCKET_TIMEOUT = 4.0
+BATCH_RESPONSE_DELAY = 2.0
 
 # ================================
 # CONFIGURATION SECTION
@@ -101,27 +102,15 @@ class ZandronumError(Exception):
 
 
 class RCONClient:
-    def __init__(self, show_colors: bool = False, batch: bool = False):
-        self.socket: Optional[socket.socket] = None
+    def __init__(self, show_colors: bool = False):
+        self.socket: socket.socket | None = None
         self.address: tuple[str, int] | None = None
         self.rcon_password: str | None = None
-        self._running = threading.Event()  # Thread-safe flag
+        self.running = False
         self.show_colors = show_colors
-        self.batch = batch
         self.logged_in = False
         self.rcon_identity: str | None = None
         self._output_lock = threading.Lock()
-
-    @property
-    def running(self) -> bool:
-        return self._running.is_set()
-
-    @running.setter
-    def running(self, value: bool) -> None:
-        if value:
-            self._running.set()
-        else:
-            self._running.clear()
 
     # ================================
     #  Huffman encode/decode
@@ -143,17 +132,17 @@ class RCONClient:
                 raise TypeError(f"Unsupported packet element: {item!r}")
         return H.encode(buf.getvalue())
 
-    def decode(self, packet):
+    def decode(self, packet: bytes) -> bytes:
         return H.decode(packet)
 
     # ================================
     #  Packet handling
     # ================================
-    def send_packet(self, parts):
+    def send_packet(self, parts: Sequence[Union[int, str, bytes]]) -> None:
         encoded = self.encode(parts)
         self.socket.sendto(encoded, self.address)
 
-    def _print(self, *args, **kwargs) -> None:
+    def _print(self, *args) -> None:
         """Thread-safe print; each output line is prefixed with '>> '."""
         message = " ".join(str(a) for a in args)
         message = message.rstrip("\r\n")
@@ -175,7 +164,7 @@ class RCONClient:
             return None
         return f"(RCON by {matches[-1].group(1)})"
 
-    def handle_packet(self, packet_id, packet_data):
+    def handle_packet(self, packet_id: int, packet_data: bytes) -> None:
         match packet_id:
             case headers.OLD_PROTOCOL:
                 raise ZandronumError("Server reports old protocol.")
@@ -216,7 +205,6 @@ class RCONClient:
             raise ZandronumError(f"Invalid port: {port} (must be 1-65535)")
         self.address = address
         self.rcon_password = password
-        self._running.set()  # Start as running
 
         # Resolve the address and try all available families (IPv4 + IPv6).
         # We try AF_INET6 first (dual-stack), then fall back to AF_INET.
@@ -280,7 +268,7 @@ class RCONClient:
     # ================================
     #  Listener
     # ================================
-    def listen_loop(self):
+    def listen_loop(self) -> None:
         while self.running:
             try:
                 data, _ = self.socket.recvfrom(MAX_PACKET_SIZE)
@@ -381,7 +369,7 @@ def main() -> None:
         readline.parse_and_bind("tab: complete")
         readline.parse_and_bind("set editing-mode emacs")
 
-    client = RCONClient(show_colors=args.colors, batch=bool(args.batch_command))
+    client = RCONClient(show_colors=args.colors)
     try:
         client.connect((ip, port), RCON_PASSWORD)
 
@@ -393,8 +381,8 @@ def main() -> None:
         if args.batch_command:
             # Batch mode: send one command and wait for response
             client.send_command(args.batch_command)
-            # Wait for server response (configurable via --timeout)
-            time.sleep(2)  # Use --timeout in future for configurability
+            # Wait for server response
+            time.sleep(BATCH_RESPONSE_DELAY)
         else:
             while True:
                 try:
