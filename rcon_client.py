@@ -123,7 +123,10 @@ class RCONClient:
                     raise ValueError(f"Packet element too large: {len(item)} bytes")
                 buf.write(item)
             elif isinstance(item, str):
-                buf.write(item.encode())
+                item_bytes = item.encode()
+                if len(item_bytes) > MAX_PACKET_SIZE:
+                    raise ValueError(f"Packet element too large: {len(item_bytes)} bytes")
+                buf.write(item_bytes)
             elif isinstance(item, int):
                 if not 0 <= item <= 255:
                     raise ValueError(f"Int out of range (0-255): {item}")
@@ -208,9 +211,6 @@ class RCONClient:
 
         # Resolve the address and try all available families (IPv4 + IPv6).
         # We try AF_INET6 first (dual-stack), then fall back to AF_INET.
-        host_str = address[0]
-        port = address[1]
-
         # Determine if host is an IPv6, IPv4, or hostname
         try:
             ipaddress.ip_address(host_str)
@@ -324,49 +324,27 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         prog="rcon_client.py",
         description="A Zandronum v3+ RCON client with Huffman compression, persistent history, and thread-safe comms.",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=(
-            "Examples:\n"
-            "  # Interactive mode:\n"
-            "  RCON_PASSWORD=mypassword python3 rcon_client.py 127.0.0.1 7777\n"
-            "\n"
-            "  # Batch mode (single command):\n"
-            "  RCON_PASSWORD=mypassword python3 rcon_client.py 127.0.0.1 7777 --command GameVersion\n"
-        ),
     )
     parser.add_argument("ip", help="Server IP address or hostname")
     parser.add_argument("port", type=int, help="Server RCON port")
     parser.add_argument("--colors", action="store_true", help="Show raw color codes from server (default: strip)")
     parser.add_argument("--command", dest="batch_command", help="Send a single command and exit (batch/CI mode)")
     args = parser.parse_args()
-
-    ip = args.ip
-    port = args.port
-
-    # Validate RCON password
     if not RCON_PASSWORD:
         print("Error: RCON_PASSWORD environment variable is not set.")
         print("Set it like this: RCON_PASSWORD=your_password python3 rcon_client.py <ip> <port>")
         sys.exit(1)
-
-    # Enable readline features
     if readline:
         readline.parse_and_bind("tab: complete")
         readline.parse_and_bind("set editing-mode emacs")
-
     client = RCONClient(show_colors=args.colors)
     try:
-        client.connect((ip, port), RCON_PASSWORD)
-
-        identity = client.rcon_identity or ""
-        print(f"[ Connected ]  {identity}")
+        client.connect((args.ip, args.port), RCON_PASSWORD)
+        print(f"[ Connected ]  {client.rcon_identity or ''}")
         print(">> [ OK ] Logged in.")
         print("Type commands. Ctrl+C to quit.")
-
         if args.batch_command:
-            # Batch mode: send one command and wait for response
             client.send_command(args.batch_command)
-            # Wait for server response
             time.sleep(BATCH_RESPONSE_DELAY)
         else:
             while True:
@@ -376,11 +354,10 @@ def main() -> None:
                     break
                 if not cmd:
                     continue
-                client.send_command(cmd)  # terminal echoes the typed command
-                # Add to history only if not duplicate of last
+                client.send_command(cmd)
                 if readline and (readline.get_current_history_length() == 0 or
                                  readline.get_history_item(readline.get_current_history_length()) != cmd):
-                                    readline.add_history(cmd)
+                    readline.add_history(cmd)
     except KeyboardInterrupt:
         pass
     except Exception as e:
