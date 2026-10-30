@@ -9,17 +9,18 @@ Rcon-zandro provides a command-line interface for remote administration of Zandr
 ## Features
 
 - **Remote Server Administration**: Execute console commands on remote Zandronum servers
-- **Persistent Command History**: Commands are saved to `~/.rcon_history` and persist across sessions
-- **Huffman Compression**: Uses Zandronum's proprietary compression algorithm for efficient protocol communication
-- **Color Support**: Optional color code stripping (`--colors` flag)
+- **Persistent Command History**: Commands are saved to `~/.rcon_history` and persist across sessions (up to 1000 commands)
+- **Huffman Compression**: Uses Zandronum's proprietary compression algorithm for efficient protocol communication, with a `0xFF` raw-data fallback and byte-boundary padding
+- **Color Support**: Optional color code stripping (`--colors` shows raw codes; default strips)
 - **Batch/CI Mode**: Send a single command and exit (`--command <cmd>`)
-- **CLI Help**: `argparse`-based help with usage examples
-- **IPv4/IPv6 Auto-Detection**: Automatically detects address family and falls back gracefully
+- **CLI Help**: `argparse`-based help
+- **IPv4/IPv6 Auto-Detection**: Tries IPv6 dual-stack first, then IPv4; falls back gracefully
 - **Thread-Safe Output**: Lock-guarded `_print()` prevents output interleaving from the background listener thread
 - **match/case Dispatch**: Clean `handle_packet()` using Python 3.10+ pattern matching
 - **Tab Completion**: Readline-based tab completion
 - **Graceful Disconnection**: Automatic cleanup on exit or errors
 - **Secure Credential Handling**: RCON password configured via environment variable
+- **Packet Size Validation**: Rejects packet elements larger than `MAX_PACKET_SIZE` (4096 bytes)
 
 ## Requirements
 
@@ -122,6 +123,10 @@ The RCON protocol uses UDP for communication, with the following characteristics
   2. Server responds with `Salt` packet containing a 32-byte salt
   3. Client calculates MD5 hash of (salt + password) and sends `Password` packet
   4. Server responds with `LoggedIn` or `InvalidPassword`
+
+- **Keep-alive**: The client sends `Pong` packets when no response is received within the socket timeout
+
+- **Timeouts**: `SOCKET_TIMEOUT = 4.0` seconds; `BATCH_RESPONSE_DELAY = 2.0` seconds (batch mode)
 
 ### Packet Types
 
