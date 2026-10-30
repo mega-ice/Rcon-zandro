@@ -344,9 +344,6 @@ def main() -> None:
             "\n"
             "  # Batch mode (single command):\n"
             "  RCON_PASSWORD=mypassword python3 rcon_client.py 127.0.0.1 7777 --command GameVersion\n"
-            "\n"
-            "  # With color output:\n"
-            "  RCON_PASSWORD=mypassword python3 rcon_client.py 127.0.0.1 7777 --colors --command status"
         ),
     )
     parser.add_argument("ip", help="Server IP address or hostname")
